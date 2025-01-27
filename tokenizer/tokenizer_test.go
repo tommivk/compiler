@@ -92,6 +92,51 @@ func TestLocations(t *testing.T) {
 	LocationsEqual(t, res, expected)
 }
 
+func TestOperators(t *testing.T) {
+	res, _ := Tokenize(">=<=-=*==<>!=/+")
+	expected := []Token{
+		{Text: ">=", Type: "operator"},
+		{Text: "<=", Type: "operator"},
+		{Text: "-", Type: "operator"},
+		{Text: "=", Type: "operator"},
+		{Text: "*", Type: "operator"},
+		{Text: "==", Type: "operator"},
+		{Text: "<", Type: "operator"},
+		{Text: ">", Type: "operator"},
+		{Text: "!=", Type: "operator"},
+		{Text: "/", Type: "operator"},
+		{Text: "+", Type: "operator"},
+	}
+	TokensEqual(t, res, expected)
+}
+
+func TestPunctuations(t *testing.T) {
+	res, _ := Tokenize(")({},;")
+	expected := []Token{
+		{Text: ")", Type: "punctuation"},
+		{Text: "(", Type: "punctuation"},
+		{Text: "{", Type: "punctuation"},
+		{Text: "}", Type: "punctuation"},
+		{Text: ",", Type: "punctuation"},
+		{Text: ";", Type: "punctuation"},
+	}
+	TokensEqual(t, res, expected)
+}
+
+func TestFunctionCall(t *testing.T) {
+	res, _ := Tokenize("var a = test(input)")
+	expected := []Token{
+		{Text: "var", Type: "identifier"},
+		{Text: "a", Type: "identifier"},
+		{Text: "=", Type: "operator"},
+		{Text: "test", Type: "identifier"},
+		{Text: "(", Type: "punctuation"},
+		{Text: "input", Type: "identifier"},
+		{Text: ")", Type: "punctuation"},
+	}
+	TokensEqual(t, res, expected)
+}
+
 func TestUnallowedKeywordShouldFail(t *testing.T) {
 	_, err := Tokenize("53b")
 	if err == nil {

@@ -2,7 +2,6 @@ package tokenizer
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 )
 
@@ -37,27 +36,48 @@ func ExtractNextToken(s string) string {
 	return string(token)
 }
 
-func MatchInteger(s string) bool {
+func MatchInteger(s string) string {
 	re := regexp.MustCompile(`^[0-9]*$`)
 	result := re.Find([]byte(s))
 	integer := string(result)
-	return len(integer) > 0
+	return integer
 }
 
-func MatchIdentifiers(s string) bool {
+func MatchIdentifiers(s string) string {
 	re := regexp.MustCompile(`^[a-zA-Z_][a-zA-Z_0-9]*`)
 	result := re.Find([]byte(s))
 	word := string(result)
-	return len(word) > 0
+	return word
+}
+
+func MatchOperators(s string) string {
+	re := regexp.MustCompile(`(\+|-|\*|\/|==|=|!=|<=|>=|<|>)`)
+	result := re.Find([]byte(s))
+	operator := string(result)
+	return operator
+}
+
+func MatchPunctuation(s string) string {
+	re := regexp.MustCompile(`(\(|,|;|}|{|\))`)
+	result := re.Find([]byte(s))
+	punctuation := string(result)
+	return punctuation
 }
 
 func MatchRegexes(s string) (Token, error) {
-	if MatchInteger(s) {
-		return Token{Type: "integer", Text: s}, nil
+	if integer := MatchInteger(s); integer != "" {
+		return Token{Type: "integer", Text: integer}, nil
 	}
 
-	if MatchIdentifiers(s) {
-		return Token{Type: "identifier", Text: s}, nil
+	if identifier := MatchIdentifiers(s); identifier != "" {
+		return Token{Type: "identifier", Text: identifier}, nil
+	}
+	if operator := MatchOperators(s); operator != "" {
+		return Token{Type: "operator", Text: operator}, nil
+	}
+
+	if punctuation := MatchPunctuation(s); punctuation != "" {
+		return Token{Type: "punctuation", Text: punctuation}, nil
 	}
 
 	return Token{}, errors.New("error while matching regex")
@@ -93,7 +113,6 @@ func Tokenize(s string) ([]Token, error) {
 		}
 		token.Location = Location{Line: line, Column: column}
 		tokens = append(tokens, token)
-		fmt.Println(token)
 		i += len(token.Text) - 1
 		column += len(token.Text)
 	}
