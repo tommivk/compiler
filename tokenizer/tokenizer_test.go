@@ -143,3 +143,27 @@ func TestUnallowedKeywordShouldFail(t *testing.T) {
 		t.Fatalf("")
 	}
 }
+
+func TestComment(t *testing.T) {
+	res, _ := Tokenize("// test")
+	if len(res) != 0 {
+		t.Fatalf("")
+	}
+	res, _ = Tokenize("# test")
+	if len(res) != 0 {
+		t.Fatalf("")
+	}
+}
+
+func TestTokensAfterComment(t *testing.T) {
+	res, _ := Tokenize("// comment \n token # another comment \n  token2")
+	expectedValues := []Token{
+		{Text: "token", Type: "identifier"},
+		{Text: "token2", Type: "identifier"},
+	}
+	expectedLocations := []Token{
+		{Location: Location{Line: 1, Column: 1}},
+		{Location: Location{Line: 2, Column: 2}}}
+	TokensEqual(t, res, expectedValues)
+	LocationsEqual(t, res, expectedLocations)
+}

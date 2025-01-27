@@ -64,6 +64,13 @@ func MatchPunctuation(s string) string {
 	return punctuation
 }
 
+func MatchComment(s string) bool {
+	re := regexp.MustCompile(`^(// |# )`)
+	result := re.Find([]byte(s))
+	comment := string(result)
+	return len(comment) > 0
+}
+
 func MatchRegexes(s string) (Token, error) {
 	if integer := MatchInteger(s); integer != "" {
 		return Token{Type: "integer", Text: integer}, nil
@@ -83,19 +90,19 @@ func MatchRegexes(s string) (Token, error) {
 	return Token{}, errors.New("error while matching regex")
 }
 
-var line int
-var column int
-
 func Tokenize(s string) ([]Token, error) {
 	tokens := []Token{}
-	line = 0
-	column = 0
+	line := 0
+	column := 0
+	skip := false
+
 	for i := 0; i < len(s); i++ {
 		newLines := CountNewlines(s[i:])
 		if newLines > 0 {
 			line += newLines
 			column = 0
 			i += newLines - 1
+			skip = false
 			continue
 		}
 
@@ -103,6 +110,15 @@ func Tokenize(s string) ([]Token, error) {
 		if whitespace > 0 {
 			column += whitespace
 			i += whitespace - 1
+			continue
+		}
+
+		if skip {
+			continue
+		}
+
+		if MatchComment(s[i:]) {
+			skip = true
 			continue
 		}
 
