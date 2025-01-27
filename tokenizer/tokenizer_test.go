@@ -1,6 +1,7 @@
 package tokenizer
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -8,6 +9,28 @@ import (
 func SlicesEqual(t *testing.T, a, b []string) {
 	if !reflect.DeepEqual(a, b) {
 		t.Fatalf("%v%s%v", a, " did not equal ", b)
+	}
+}
+
+func TokensEqual(t *testing.T, a, b []Token) {
+	if len(a) != len(b) {
+		t.Fatalf("%v%s%v", a, " did not equal ", b)
+	}
+	for i, v := range a {
+		if v.Text != b[i].Text || v.Type != b[i].Type {
+			t.Fatalf("%v%s%v", v, " did not equal ", b[i])
+		}
+	}
+}
+
+func LocationsEqual(t *testing.T, a, b []Token) {
+	if len(a) != len(b) {
+		t.Fatalf("%v%s%v", a, " did not equal ", b)
+	}
+	for i, v := range a {
+		if v.Location != b[i].Location {
+			t.Fatalf("%v%s%v", v.Location, " did not equal ", b[i].Location)
+		}
 	}
 }
 
@@ -19,27 +42,54 @@ func TestShouldNotIncludeWhitespace(t *testing.T) {
 }
 
 func TestIntegersShouldBeIncluded(t *testing.T) {
-	res, _ := Tokenize("2 25 9000")
-	expected := []string{"2", "25", "9000"}
-	SlicesEqual(t, res, expected)
+	res, _ := Tokenize("2 25 9000 a123a")
+	expected := []Token{
+		{Text: "2", Type: "integer"},
+		{Text: "25", Type: "integer"},
+		{Text: "9000", Type: "integer"},
+		{Text: "a123a", Type: "identifier"}}
+	TokensEqual(t, res, expected)
 }
 
 func TestIfAndWhileKeywordsShouldBeIncluded(t *testing.T) {
 	res, _ := Tokenize("if while while if")
-	expected := []string{"if", "while", "while", "if"}
-	SlicesEqual(t, res, expected)
+	expected := []Token{
+		{Text: "if", Type: "identifier"},
+		{Text: "while", Type: "identifier"},
+		{Text: "while", Type: "identifier"},
+		{Text: "if", Type: "identifier"}}
+	TokensEqual(t, res, expected)
 }
 
 func TestShouldWorkWithLargeAmountOfWhitespace(t *testing.T) {
 	res, _ := Tokenize("if      \n while")
-	expected := []string{"if", "while"}
-	SlicesEqual(t, res, expected)
+	expected := []Token{
+		{Text: "if", Type: "identifier"},
+		{Text: "while", Type: "identifier"}}
+	TokensEqual(t, res, expected)
 }
 
 func TestKeywordsShouldBeIncluded(t *testing.T) {
 	res, _ := Tokenize("a Variable _T b52")
-	expected := []string{"a", "Variable", "_T", "b52"}
-	SlicesEqual(t, res, expected)
+	expected := []Token{
+		{Text: "a", Type: "identifier"},
+		{Text: "Variable", Type: "identifier"},
+		{Text: "_T", Type: "identifier"},
+		{Text: "b52", Type: "identifier"},
+	}
+	TokensEqual(t, res, expected)
+}
+
+func TestLocations(t *testing.T) {
+	res, _ := Tokenize("1   2\n3  \n\n\n    4")
+	fmt.Println(res)
+	expected := []Token{
+		{Text: "1", Type: "integer", Location: Location{Line: 0, Column: 0}},
+		{Text: "2", Type: "integer", Location: Location{Line: 0, Column: 4}},
+		{Text: "3", Type: "integer", Location: Location{Line: 1, Column: 0}},
+		{Text: "4", Type: "integer", Location: Location{Line: 4, Column: 4}},
+	}
+	LocationsEqual(t, res, expected)
 }
 
 func TestUnallowedKeywordShouldFail(t *testing.T) {
